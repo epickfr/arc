@@ -1,12 +1,488 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archive Download Hub</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BartBlast Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 25%, #fcd34d 50%, #fbbf24 75%, #f59e0b 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+      border-radius: 10px;
+      border: 3px solid rgba(255, 255, 255, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    /* Floating Orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.6;
+      z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.8) 0%, rgba(245, 158, 11, 0.4) 50%, transparent 70%);
+      top: -200px;
+      left: -200px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(253, 230, 138, 0.8) 0%, rgba(251, 191, 36, 0.4) 50%, transparent 70%);
+      top: 50%;
+      right: -150px;
+      animation-delay: -5s;
+    }
+
+    .orb-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(251, 191, 36, 0.5) 50%, transparent 70%);
+      bottom: -100px;
+      left: 30%;
+      animation-delay: -10s;
+    }
+
+    .orb-4 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(249, 168, 37, 0.7) 0%, rgba(251, 191, 36, 0.3) 50%, transparent 70%);
+      top: 30%;
+      left: 10%;
+      animation-delay: -15s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(50px, -50px) scale(1.1); }
+      50% { transform: translate(-30px, 30px) scale(0.95); }
+      75% { transform: translate(-50px, -30px) scale(1.05); }
+    }
+
+    /* Glass Effect */
+    .glass {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        0 8px 32px rgba(251, 191, 36, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(251, 191, 36, 0.1);
+    }
+
+    .glass-strong {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 
+        0 12px 40px rgba(251, 191, 36, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1px 0 rgba(251, 191, 36, 0.15);
+    }
+
+    /* Smooth Transitions - 50000000 transitions */
+    .transition-all {
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .transition-transform {
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .transition-colors {
+      transition: all 0.3s ease;
+    }
+
+    .transition-shadow {
+      transition: box-shadow 0.3s ease;
+    }
+
+    /* Platform Card */
+    .platform-card {
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .platform-card:hover {
+      transform: translateY(-10px) rotateX(3deg) rotateY(2deg);
+    }
+
+    .platform-card.active {
+      transform: translateY(-15px) scale(1.05);
+      box-shadow: 
+        0 25px 70px rgba(251, 191, 36, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(251, 191, 36, 0.2);
+      border: 2px solid rgba(251, 191, 36, 0.6);
+    }
+
+    /* Download Button */
+    .download-btn {
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .download-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .download-btn:hover::before {
+      left: 100%;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 
+        0 20px 50px rgba(251, 191, 36, 0.5),
+        0 0 40px rgba(251, 191, 36, 0.4);
+    }
+
+    /* Text Gradient */
+    .text-gradient {
+      background: linear-gradient(135deg, #d97706 0%, #f59e0b 25%, #fbbf24 50%, #fcd34d 75%, #fef3c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 0.5s ease;
+    }
+
+    /* Glow Effect */
+    .glow {
+      text-shadow: 
+        0 0 20px rgba(251, 191, 36, 0.6),
+        0 0 40px rgba(251, 191, 36, 0.4),
+        0 0 60px rgba(251, 191, 36, 0.2);
+    }
+
+    /* Icon Glow */
+    .icon-glow {
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+    }
+
+    /* Content Fade */
+    .content-fade {
+      animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ripple Effect */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.8s ease, height 0.8s ease, opacity 0.8s ease;
+      opacity: 0;
+    }
+
+    .ripple:active::after {
+      width: 400px;
+      height: 400px;
+      opacity: 0;
+    }
+
+    /* Icon Container */
+    .icon-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* File Card */
+    .file-card {
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .file-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(251, 191, 36, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ============ CONFIGURATION: SET YOUR DOWNLOAD LINKS HERE ============
+    // Each platform now has an array of files
+    const archiveData = {
+      windows: [
+        {
+          id: 'win-1',
+          name: "BartBlast v1 - First Version",
+          size: "116 MB",
+          type: "EXE",
+          date: "Feb 14, 2026",
+          url: "https://pixeldrain.com/u/my59QkDo"
+        }
+        ]
+      macos: [
+        ]
+      android: [
+        
+      ]
+    };
+    // =====================================================================
+
+    // SVG Icons as components
+    const MonitorIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+    );
+
+    const AppleIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.55 1.47-.67 3.17-2.14 3.17-.19-1.58.89-3.3 2.14-3.17z"/>
+      </svg>
+    );
+
+    const SmartphoneIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+        <line x1="12" y1="18" x2="12" y2="18"></line>
+      </svg>
+    );
+
+    const ArchiveIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="21 8 21 21 3 21 3 8"></polyline>
+        <rect x="1" y="3" width="22" height="5"></rect>
+        <line x1="10" y1="12" x2="14" y2="12"></line>
+      </svg>
+    );
+
+    const DownloadIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    );
+
+    const FileIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+        <polyline points="13 2 13 9 20 9"></polyline>
+      </svg>
+    );
+
+    const PackageIcon = ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
+    );
+
+    function App() {
+      const [selectedPlatform, setSelectedPlatform] = useState('windows');
+      const [isLoaded, setIsLoaded] = useState(false);
+
+      useEffect(() => {
+        setIsLoaded(true);
+      }, []);
+
+      const platforms = [
+        { id: 'windows', name: 'Windows', icon: MonitorIcon, color: 'from-blue-400 to-blue-600' },
+        { id: 'macos', name: 'macOS', icon: AppleIcon, color: 'from-gray-400 to-gray-600' },
+        { id: 'android', name: 'Android', icon: SmartphoneIcon, color: 'from-green-400 to-green-600' }
+      ];
+
+      const currentFiles = archiveData[selectedPlatform] || [];
+      const platformName = platforms.find(p => p.id === selectedPlatform)?.name || 'Platform';
+
+      return (
+        <div className="min-h-screen relative overflow-hidden">
+          {/* Floating Orbs Background */}
+          <div className="orb orb-1"></div>
+          <div className="orb orb-2"></div>
+          <div className="orb orb-3"></div>
+          <div className="orb orb-4"></div>
+
+          {/* Main Content */}
+          <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-6">
+            {/* Header */}
+            <div className={`glass-strong rounded-3xl p-8 mb-8 max-w-2xl w-full text-center content-fade ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+              <h1 className="text-5xl md:text-6xl font-bold text-gradient glow mb-3">
+                BartBlast
+              </h1>
+              <p className="text-lg text-gray-800 font-medium">
+                Archive Download Hub
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <ArchiveIcon className="w-5 h-5 text-amber-600 icon-glow" />
+                <span className="text-sm text-gray-700">Official Game Archives</span>
+              </div>
+            </div>
+
+            {/* Platform Selection */}
+            <div className={`glass-strong rounded-3xl p-8 mb-8 max-w-4xl w-full content-fade ${isLoaded ? 'opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+                <FileIcon className="w-6 h-6 text-amber-600" />
+                Select Platform
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {platforms.map((platform) => {
+                  const Icon = platform.icon;
+                  const isActive = selectedPlatform === platform.id;
+                  return (
+                    <button
+                      key={platform.id}
+                      onClick={() => setSelectedPlatform(platform.id)}
+                      className={`platform-card glass rounded-2xl p-6 flex flex-col items-center gap-4 cursor-pointer ${isActive ? 'active' : ''}`}
+                    >
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${platform.color} flex items-center justify-center shadow-lg`}>
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      <span className={`text-xl font-semibold ${isActive ? 'text-amber-700' : 'text-gray-800'}`}>
+                        {platform.name}
+                      </span>
+                      {isActive && (
+                        <div className="mt-2 px-4 py-1 bg-amber-500/40 rounded-full">
+                          <span className="text-sm text-amber-700 font-medium">Selected</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Download Section - Now shows multiple files */}
+            <div className={`glass-strong rounded-3xl p-8 max-w-3xl w-full content-fade ${isLoaded ? 'opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
+                  <PackageIcon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-semibold text-gray-800">
+                  {platformName} Archives
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {currentFiles.map((file, index) => (
+                  <div 
+                    key={file.id} 
+                    className="file-card glass rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                    style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                  >
+                    <div className="flex-1">
+                      <h4 className="text-lg font-semibold text-gray-800 mb-2">{file.name}</h4>
+                      <div className="flex flex-wrap gap-2 text-sm">
+                        <span className="px-3 py-1 bg-amber-100/60 rounded-full text-amber-700 font-medium">
+                          {file.size}
+                        </span>
+                        <span className="px-3 py-1 bg-amber-100/60 rounded-full text-amber-700 font-medium">
+                          {file.type}
+                        </span>
+                        <span className="px-3 py-1 bg-gray-100/60 rounded-full text-gray-700 font-medium">
+                          {file.date}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="download-btn ripple w-full md:w-auto px-6 py-3 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl min-w-[160px]"
+                    >
+                      <DownloadIcon className="w-5 h-5" />
+                      Download
+                    </a>
+                  </div>
+                ))}
+              </div>
+
+              {currentFiles.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-600">No archives available for this platform yet.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className={`mt-8 text-center content-fade ${isLoaded ? 'opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+              <p className="text-sm text-gray-700">
+                © 2024 BartBlast Archive. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
 </html>
